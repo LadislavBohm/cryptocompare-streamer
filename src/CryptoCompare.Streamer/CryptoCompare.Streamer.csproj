@@ -1,8 +1,17 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <TargetFramework>netstandard2.1</TargetFramework>
         <Nullable>disable</Nullable>
+        <Authors>Ladislav Böhm</Authors>
+        <Description>CryptoCompare real-time API client written in C#</Description>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/LadislavBohm/cryptocompare-streamer</PackageProjectUrl>
+        <PackageIcon>cryptocompare-icon.png</PackageIcon>
+        <PackageIconUrl />
+        <RepositoryUrl>https://github.com/LadislavBohm/cryptocompare-streamer</RepositoryUrl>
+        <PackageTags>cryptocompare crypto websocket streamer cryptocompare.client cryptocurrency</PackageTags>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     </PropertyGroup>
 
 	<ItemGroup>
@@ -14,5 +23,12 @@
 	<ItemGroup>
 	  <PackageReference Include="Microsoft.Extensions.Logging" Version="3.1.2" />
 	  <PackageReference Include="Socket.Io.Client.Core" Version="1.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Include="..\..\cryptocompare-icon.png">
+	    <Pack>True</Pack>
+	    <PackagePath></PackagePath>
+	  </None>
 	</ItemGroup>
 </Project>

@@ -1,8 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Reactive.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using CryptoCompare.Streamer.Model;
 using CryptoCompare.Streamer.Test.Helpers;
 using Microsoft.Extensions.Logging;
 using Xunit;
@@ -51,12 +53,13 @@ namespace CryptoCompare.Streamer.Test
                 "0~sistemkoin~BTC~USD", "0~tchapp~BTC~USD", "0~thore~BTC~USD", "0~utorg~BTC~USD", "0~xcoex~BTC~USD"
             };
 
-            client.SubscribeToTrades(btcUsd);
+            _ = client.SubscribeToTrades(btcUsd);
 
             await Task.Delay(2000);
             await subscribe.AssertAtLeastAsync(10, TimeSpan.FromMilliseconds(2000));
 
-            client.UnsubscribeFromTrades(btcUsd).SubscribeCalled();
+            _ = client.UnsubscribeFromTrades(btcUsd);
+            await Task.Delay(100);
             var calledTimes = subscribe.CalledTimes;
 
             await Task.Delay(2000);
