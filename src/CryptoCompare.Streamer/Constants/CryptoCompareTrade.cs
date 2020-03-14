@@ -65,28 +65,50 @@ namespace CryptoCompare.Streamer.Constants
             {
                 if (string.IsNullOrEmpty(tradeString))
                     throw new ArgumentException("Value cannot be null or empty.", nameof(tradeString));
-
+                
                 var values = tradeString.Split("~");
                 var mask = Convert.ToInt32(values[^1], 16);
-                var trade = new Model.Trade(
-                    ValidateOrThrow(Fields[nameof(Model.Trade.Id)], values[5]),
-                    ValidateOrThrow(Fields[nameof(Model.Trade.Timestamp)], CryptoCompareUtils.ConvertToDateTime(long.Parse(values[6]))),
-                    ValidateOrThrow(Fields[nameof(Model.Trade.Exchange)], values[1]),
-                    ValidateOrThrow(Fields[nameof(Model.Trade.FromCurrency)], values[2]),
-                    ValidateOrThrow(Fields[nameof(Model.Trade.ToCurrency)], values[3]),
-                    ValidateOrThrow(Fields[nameof(Model.Trade.Flags)], int.Parse(values[4])),
-                    ValidateOrThrow(Fields[nameof(Model.Trade.Price)], ParseDecimal(values[8])),
-                    ValidateOrThrow(Fields[nameof(Model.Trade.Quantity)], ParseDecimal(values[7])),
-                    ValidateOrThrow(Fields[nameof(Model.Trade.Total)], ParseDecimal(values[9])),
-                    ValidateOrThrow(Fields[nameof(Model.Trade.Type)], ParseType(values[4])) //TODO: verify that this value should be parsed like this
-                );
-                
-                T ValidateOrThrow<T>(int field, T value)
+
+                int currentField = 0;
+                string GetFieldValue(int field)
                 {
-                    if (field != 0 && (mask & field) != field) 
-                        throw new ArgumentException($"Field value: {field} is invalid. Value: {value}");
+                    string value = null;
+                    if (field == 0)
+                    {
+                        value = values[currentField];
+                        currentField++;
+                    }
+                    else if ((mask & field) > 0)
+                    {
+                        value = values[currentField];
+                        currentField++;
+                    }
                     return value;
                 }
+
+                var type = GetFieldValue(Fields[nameof(Model.Trade.Type)]);
+                var exchange = GetFieldValue(Fields[nameof(Model.Trade.Exchange)]);
+                var fromCurrency = GetFieldValue(Fields[nameof(Model.Trade.FromCurrency)]);
+                var toCurrency = GetFieldValue(Fields[nameof(Model.Trade.ToCurrency)]);
+                var flags = GetFieldValue(Fields[nameof(Model.Trade.Flags)]);
+                var id = GetFieldValue(Fields[nameof(Model.Trade.Id)]);
+                var timestamp = GetFieldValue(Fields[nameof(Model.Trade.Timestamp)]);
+                var quantity = GetFieldValue(Fields[nameof(Model.Trade.Quantity)]);
+                var price = GetFieldValue(Fields[nameof(Model.Trade.Price)]);
+                var total = GetFieldValue(Fields[nameof(Model.Trade.Total)]);
+
+                var trade = new Model.Trade(
+                    id, 
+                    CryptoCompareUtils.ConvertToDateTime(long.Parse(timestamp)), 
+                    exchange, 
+                    fromCurrency, 
+                    toCurrency,
+                    int.Parse(flags), 
+                    ParseDecimal(price), 
+                    ParseDecimal(quantity), 
+                    ParseDecimal(total), 
+                    ParseType(type)
+                );
 
                 return trade;
             }

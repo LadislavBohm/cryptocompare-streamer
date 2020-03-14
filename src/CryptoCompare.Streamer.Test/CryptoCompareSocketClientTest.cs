@@ -25,6 +25,7 @@ namespace CryptoCompare.Streamer.Test
 
             await client.StartAsync();
 
+            //var btcUsd = new[] {"0~thore~BTC~USD"};
             var btcUsd = new[]
             {
                 "0~Abucoins~BTC~USD", "0~BTCAlpha~BTC~USD", "0~BTCChina~BTC~USD", "0~BTCE~BTC~USD",
@@ -52,13 +53,13 @@ namespace CryptoCompare.Streamer.Test
 
             client.SubscribeToTrades(btcUsd);
 
-            await Task.Delay(10000);
+            await Task.Delay(2000);
             await subscribe.AssertAtLeastAsync(10, TimeSpan.FromMilliseconds(2000));
 
             client.UnsubscribeFromTrades(btcUsd).SubscribeCalled();
             var calledTimes = subscribe.CalledTimes;
 
-            await Task.Delay(100);
+            await Task.Delay(2000);
             Assert.Equal(calledTimes, subscribe.CalledTimes);
         }
     }
