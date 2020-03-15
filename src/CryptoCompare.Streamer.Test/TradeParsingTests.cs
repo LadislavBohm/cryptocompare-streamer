@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using CryptoCompare.Streamer.Constants;
 using CryptoCompare.Streamer.Model;
 using Xunit;
+using CCC = CryptoCompare.Streamer.CryptoCompare.CCC;
 
 namespace CryptoCompare.Streamer.Test
 {

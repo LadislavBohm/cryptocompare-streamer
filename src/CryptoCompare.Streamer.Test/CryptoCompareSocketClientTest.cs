@@ -21,7 +21,7 @@ namespace CryptoCompare.Streamer.Test
         }
 
         [Fact]
-        public async Task SubscribeToTrade_ShouldReceiveTrades()
+        public async Task Trade_ShouldReceiveTrades()
         {
             using var client = CreateClient();
 
@@ -67,6 +67,35 @@ namespace CryptoCompare.Streamer.Test
 
             await Task.Delay(2000);
             Assert.Equal(calledTimes, subscribe.CalledTimes);
+        }
+
+        [Fact]
+        public async Task Current_ShouldReceiveCurrent()
+        {
+            using var client = CreateClient(LogLevel.Information);
+
+            var subscribe = client.OnCurrent.SubscribeCalled(c =>
+            {
+                ;
+
+            });
+
+            await client.StartAsync();
+
+            var subs = new List<ICryptoCompareSubscription>
+            {
+                new CurrentSubscription("0~Bitfinex~BTC~USD"),
+                //new VolumeSubscription("BTC"),
+                //new TradeSubscription("0~Bitfinex~BTC~USD"),
+                //new CCCAGGSubscription("BTC", "USD")
+            };
+
+            _ = client.Subscribe(subs);
+
+            await Task.Delay(5000);
+            subscribe.AssertAtLeast(1);
+
+            _ = client.Unsubscribe(subs);
         }
     }
 }

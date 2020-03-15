@@ -18,6 +18,9 @@ namespace CryptoCompare.Streamer.Test
 
         protected ILogger<T> CreateLogger<T>(LogLevel minLogLevel = LogLevel.Debug) => new XUnitLogger<T>(_testOutputHelper, minLogLevel);
 
-        protected CryptoCompareSocketClient CreateClient() => new CryptoCompareSocketClient(logger: CreateLogger<CryptoCompareSocketClient>());
+        protected CryptoCompareSocketClient CreateClient(LogLevel minLogLevel = LogLevel.Debug)
+        {
+            return new CryptoCompareSocketClient(logger: CreateLogger<CryptoCompareSocketClient>(minLogLevel));
+        }
     }
 }

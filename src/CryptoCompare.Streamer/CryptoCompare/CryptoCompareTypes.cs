@@ -1,4 +1,4 @@
-﻿namespace CryptoCompare.Streamer.Constants
+﻿namespace CryptoCompare.Streamer.CryptoCompare
 {
     internal static partial class CCC
     {

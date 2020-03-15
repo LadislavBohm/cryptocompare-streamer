@@ -3,9 +3,9 @@ using System.Text;
 
 namespace CryptoCompare.Streamer.Model
 {
-    public class Trade
+    public class TradeEvent
     {
-        public Trade(string id,
+        public TradeEvent(string id,
                      DateTime timestamp,
                      string exchange,
                      string fromCurrency,

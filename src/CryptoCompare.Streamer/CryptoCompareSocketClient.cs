@@ -5,7 +5,6 @@ using System.Reactive;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Threading.Tasks;
-using CryptoCompare.Streamer.Constants;
 using CryptoCompare.Streamer.Model;
 using CryptoCompare.Streamer.Model.Messages;
 using CryptoCompare.Streamer.Model.Subscriptions;
@@ -16,6 +15,7 @@ using Socket.Io.Client.Core.Json;
 using Socket.Io.Client.Core.Model;
 using Socket.Io.Client.Core.Model.SocketEvent;
 using Utf8Json.Resolvers;
+using CCC = CryptoCompare.Streamer.CryptoCompare.CCC;
 
 namespace CryptoCompare.Streamer
 {
@@ -25,7 +25,9 @@ namespace CryptoCompare.Streamer
         private readonly Uri _url;
         private readonly ISocketIoClient _client;
 
-        private readonly ISubject<Trade> _tradeSubject = new Subject<Trade>();
+        private readonly ISubject<TradeEvent> _tradeSubject = new Subject<TradeEvent>();
+        private readonly ISubject<VolumeEvent> _volumeSubject = new Subject<VolumeEvent>();
+        private readonly ISubject<CurrentEvent> _currentSubject = new Subject<CurrentEvent>();
 
         public CryptoCompareSocketClient(string url = "https://streamer.cryptocompare.com", ILogger<CryptoCompareSocketClient> logger = null)
         {
@@ -35,7 +37,10 @@ namespace CryptoCompare.Streamer
             _client.On("m").Subscribe(OnMessage);
         }
 
-        public IObservable<Trade> OnTrade => _tradeSubject.AsObservable();
+        public IObservable<TradeEvent> OnTrade => _tradeSubject.AsObservable();
+        public IObservable<VolumeEvent> OnVolume => _volumeSubject.AsObservable();
+        public IObservable<CurrentEvent> OnCurrent => _currentSubject.AsObservable();
+
 
         public Task StartAsync() => _client.OpenAsync(_url);
 
@@ -93,6 +98,35 @@ namespace CryptoCompare.Streamer
                     _logger.LogDebug($"Received message: {e.FirstData}");
 
                 var data = e.FirstData;
+                if (string.IsNullOrEmpty(data))
+                {
+                    _logger.LogWarning("Received empty data from socket.");
+                }
+                else
+                {
+                    var prefix = ParsePrefix(data);
+                    if (prefix == ICryptoCompareSubscription.CurrentPrefix)
+                    {
+                        _currentSubject.OnNext(CCC.Current.Unpack(data));
+                    }
+                    else if (prefix == ICryptoCompareSubscription.TradePrefix)
+                    {
+                        _tradeSubject.OnNext(CCC.Trade.Unpack(data));
+                    }
+                    else if (prefix == ICryptoCompareSubscription.CCCAGGPrefix)
+                    {
+                        _logger.LogInformation($"CCCAGG data: {data}");
+                    }
+                    else if (prefix == ICryptoCompareSubscription.VolumePrefix)
+                    {
+                        _volumeSubject.OnNext(CCC.Volume.Unpack(data));
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"Unknown data type: {data}");
+                    }
+                }
+
                 if (!string.IsNullOrEmpty(data) && data.StartsWith('0'))
                 {
                     _tradeSubject.OnNext(CCC.Trade.Unpack(data));
@@ -104,7 +138,18 @@ namespace CryptoCompare.Streamer
             }
         }
 
-        private string CreateSub(string exchange, string fromCurrency, string toCurrency) => $"~0~{exchange}~{fromCurrency}~{toCurrency}";
+        private string ParsePrefix(string data)
+        {
+            for (int i = 0; i < data.Length; i++)
+            {
+                if (!char.IsDigit(data[i]))
+                {
+                    return data.Substring(0, i);
+                }
+            }
+
+            return string.Empty;
+        }
 
         public void Dispose()
         {
