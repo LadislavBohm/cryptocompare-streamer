@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
-namespace CryptoCompare.Streamer.Constants
+namespace CryptoCompare.Streamer.CryptoCompare
 {
     internal static partial class CCC
     {

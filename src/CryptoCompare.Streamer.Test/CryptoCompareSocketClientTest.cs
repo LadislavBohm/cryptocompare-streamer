@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reactive.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using CryptoCompare.Streamer.Model;
+using CryptoCompare.Streamer.Model.Subscriptions;
 using CryptoCompare.Streamer.Test.Helpers;
+using CryptoCompare.Streamer.Test.Model;
 using Microsoft.Extensions.Logging;
 using Xunit;
 using Xunit.Abstractions;
@@ -19,15 +22,20 @@ namespace CryptoCompare.Streamer.Test
         }
 
         [Fact]
-        public async Task SubscribeToTrade_ShouldReceiveTrades()
+        public async Task Trade_ShouldReceiveTrades()
         {
             using var client = CreateClient();
 
+            var nonSubs = new List<CalledBase>
+            {
+                client.OnCurrent.SubscribeCalled(),
+                client.OnVolume.SubscribeCalled()
+            };
             var subscribe = client.OnTrade.SubscribeCalled();
 
             await client.StartAsync();
 
-            //var btcUsd = new[] {"0~thore~BTC~USD"};
+            //var btcUsd = new[] { "0~Bitfinex~BTC~USD" };
             var btcUsd = new[]
             {
                 "0~Abucoins~BTC~USD", "0~BTCAlpha~BTC~USD", "0~BTCChina~BTC~USD", "0~BTCE~BTC~USD",
@@ -53,17 +61,72 @@ namespace CryptoCompare.Streamer.Test
                 "0~sistemkoin~BTC~USD", "0~tchapp~BTC~USD", "0~thore~BTC~USD", "0~utorg~BTC~USD", "0~xcoex~BTC~USD"
             };
 
-            _ = client.SubscribeToTrades(btcUsd);
+            var subscriptions = btcUsd.Select(c => new TradeSubscription(c)).ToList();
+            _ = client.Subscribe(subscriptions);
 
-            await Task.Delay(2000);
-            await subscribe.AssertAtLeastAsync(10, TimeSpan.FromMilliseconds(2000));
+            await Task.Delay(500);
+            await subscribe.AssertAtLeastAsync(5, TimeSpan.FromMilliseconds(2000));
 
-            _ = client.UnsubscribeFromTrades(btcUsd);
+            _ = client.Unsubscribe(subscriptions);
             await Task.Delay(100);
             var calledTimes = subscribe.CalledTimes;
 
-            await Task.Delay(2000);
+            await Task.Delay(500);
             Assert.Equal(calledTimes, subscribe.CalledTimes);
+            nonSubs.ForEach(s => s.AssertNever());
+        }
+
+        [Fact]
+        public async Task Current_ShouldReceiveCurrent()
+        {
+            using var client = CreateClient();
+
+            var nonSubs = new List<CalledBase>
+            {
+                client.OnTrade.SubscribeCalled(),
+                client.OnVolume.SubscribeCalled()
+            };
+            var subscribe = client.OnCurrent.SubscribeCalled(c =>
+            {
+                TestOutputHelper.WriteLine(c.ToString());
+            });
+
+            await client.StartAsync();
+
+            var sub = new CurrentSubscription("Bitfinex", "BTC", "USD");
+            _ = client.Subscribe(sub);
+
+            await subscribe.AssertAtLeastOnceAsync(TimeSpan.FromMilliseconds(500));
+            nonSubs.ForEach(s => s.AssertNever());
+
+            _ = client.Unsubscribe(sub);
+        }
+
+        [Fact]
+        public async Task Volume_ShouldReceiveVolume()
+        {
+            using var client = CreateClient();
+
+            var nonSubs = new List<CalledBase>
+            {
+                client.OnTrade.SubscribeCalled(),
+                client.OnCurrent.SubscribeCalled()
+            };
+
+            var subscribe = client.OnVolume.SubscribeCalled(c =>
+            {
+                TestOutputHelper.WriteLine(c.ToString());
+            });
+
+            await client.StartAsync();
+
+            var sub = new VolumeSubscription("BTC");
+            _ = client.Subscribe(sub);
+
+            await subscribe.AssertAtLeastOnceAsync(TimeSpan.FromMilliseconds(200));
+            nonSubs.ForEach(s => s.AssertNever());
+
+            _ = client.Unsubscribe(sub);
         }
     }
 }

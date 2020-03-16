@@ -3,18 +3,17 @@ using System.Text;
 
 namespace CryptoCompare.Streamer.Model
 {
-    public class Trade
+    public class TradeEvent
     {
-        public Trade(string id,
+        public TradeEvent(string id,
                      DateTime timestamp,
                      string exchange,
                      string fromCurrency,
                      string toCurrency,
-                     int flags,
+                     TradeFlags flags,
                      decimal price,
                      decimal quantity,
-                     decimal total,
-                     TradeType type)
+                     decimal total)
         {
             Id = id;
             Timestamp = timestamp;
@@ -25,26 +24,24 @@ namespace CryptoCompare.Streamer.Model
             Price = price;
             Quantity = quantity;
             Total = total;
-            Type = type;
         }
         
-        public string Id { get; internal set; }
-        public DateTime Timestamp { get; internal set; }
-        public string Exchange { get; internal set; }
-        public string FromCurrency { get; internal set; }
-        public string ToCurrency { get; internal set; }
-        public int Flags { get; internal set; }
-        public decimal Price { get; internal set; }
-        public decimal Quantity { get; internal set; }
-        public decimal Total { get; internal set; }
-        public TradeType Type { get; internal set; }
+        public string Id { get; }
+        public DateTime Timestamp { get; }
+        public string Exchange { get; }
+        public string FromCurrency { get; }
+        public string ToCurrency { get; }
+        public TradeFlags Flags { get; }
+        public decimal Price { get; }
+        public decimal Quantity { get; }
+        public decimal Total { get; }
 
         public override string ToString()
         {
             var sb = new StringBuilder();
             sb.Append(Exchange);
             sb.Append(" | ");
-            sb.Append(Type);
+            sb.Append(Flags);
             sb.Append(" | P: ");
             sb.Append(Price);
             sb.Append(" | Q: ");

@@ -9,15 +9,18 @@ namespace CryptoCompare.Streamer.Test
 {
     public abstract class TestBase
     {
-        private readonly ITestOutputHelper _testOutputHelper;
+        protected readonly ITestOutputHelper TestOutputHelper;
 
         protected TestBase(ITestOutputHelper testOutputHelper)
         {
-            _testOutputHelper = testOutputHelper;
+            TestOutputHelper = testOutputHelper;
         }
 
-        protected ILogger<T> CreateLogger<T>(LogLevel minLogLevel = LogLevel.Debug) => new XUnitLogger<T>(_testOutputHelper, minLogLevel);
+        protected ILogger<T> CreateLogger<T>(LogLevel minLogLevel = LogLevel.Debug) => new XUnitLogger<T>(TestOutputHelper, minLogLevel);
 
-        protected CryptoCompareSocketClient CreateClient() => new CryptoCompareSocketClient(logger: CreateLogger<CryptoCompareSocketClient>());
+        protected CryptoCompareSocketClient CreateClient(LogLevel minLogLevel = LogLevel.Debug)
+        {
+            return new CryptoCompareSocketClient(logger: CreateLogger<CryptoCompareSocketClient>(minLogLevel));
+        }
     }
 }
