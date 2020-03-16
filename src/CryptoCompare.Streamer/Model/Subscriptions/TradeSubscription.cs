@@ -13,7 +13,7 @@ namespace CryptoCompare.Streamer.Model.Subscriptions
         public TradeSubscription(string sub)
         {
             if (string.IsNullOrEmpty(sub)) throw new ArgumentException("Value cannot be null or empty.", nameof(sub));
-            if (sub.StartsWith(ICryptoCompareSubscription.TradePrefix))
+            if (!sub.StartsWith(ICryptoCompareSubscription.TradePrefix))
                 throw new ArgumentException($"Sub must start with '{ICryptoCompareSubscription.TradePrefix}'");
 
             var parts = sub.Split("~");

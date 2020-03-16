@@ -69,10 +69,7 @@ namespace CryptoCompare.Streamer.Test
 
             _ = client.Unsubscribe(subscriptions);
             await Task.Delay(100);
-            var calledTimes = subscribe.CalledTimes;
-
-            await Task.Delay(500);
-            Assert.Equal(calledTimes, subscribe.CalledTimes);
+            
             nonSubs.ForEach(s => s.AssertNever());
         }
 
