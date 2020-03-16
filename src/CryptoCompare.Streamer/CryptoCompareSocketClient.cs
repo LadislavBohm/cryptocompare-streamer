@@ -111,7 +111,8 @@ namespace CryptoCompare.Streamer
                     }
                     else if (prefix == ICryptoCompareSubscription.TradePrefix)
                     {
-                        _tradeSubject.OnNext(CCC.Trade.Unpack(data));
+                        if (CCC.Trade.TryUnpack(data, out var trade))
+                            _tradeSubject.OnNext(trade);
                     }
                     else if (prefix == ICryptoCompareSubscription.CCCAGGPrefix)
                     {
@@ -125,11 +126,6 @@ namespace CryptoCompare.Streamer
                     {
                         _logger.LogWarning($"Unknown data type: {data}");
                     }
-                }
-
-                if (!string.IsNullOrEmpty(data) && data.StartsWith('0'))
-                {
-                    _tradeSubject.OnNext(CCC.Trade.Unpack(data));
                 }
             }
             catch (Exception ex)
