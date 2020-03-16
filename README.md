@@ -15,7 +15,7 @@ PM> Install-Package CryptoCompare.Streamer
 ## Features
 
 - Fully async and non-blocking API
-- Subscribe/Unsubscribe to one or more exchange currency pairs
+- Subscribe/Unsubscribe to following streams: Trade, Current, Volume
 - Flexible event handling thanks to [Rx.Net](https://github.com/dotnet/reactive) (see examples)
 
 ## Examples
@@ -27,15 +27,34 @@ PM> Install-Package CryptoCompare.Streamer
 //optionally supply different URL or ILogger instance (default is NullLogger)
 using var client = new CryptoCompareSocketClient();
 
-//subscription to all trades
+//handle trades by subscription to OnTrade (same for OnCurrent and OnVolume)
 var subscription = client.OnTrade.Subscribe(trade => Console.WriteLine(trade));
 
 //start socket (needs to be called before subscribing)
 await client.StartAsync();
 
-//specify to which trade pairs you want to subscribe to
-client.SubscribeToTrades("0~Bitfinex~BTC~USD");
-client.SubscribeToTrades("0~BitexBook~BTC~USD", "0~Bitfinex~BTC~USD", "0~Bitlish~BTC~USD", "0~Bitpoint~BTC~USD");
+//TRADE
+
+//use 'sub' format to subscribe
+client.Subscribe(new TradeSubscription("0~Bitfinex~BTC~USD"));
+//or specify exchange currency pair
+client.Subscribe(new TradeSubscription("Bitfinex", "BTC", "USD"));
+//or multiple trade currency pairs
+var subscriptions = new[] {"0~Bitfinex~BTC~USD", "0~Bittrex~BTC~USD", "0~Bitstamp~BTC~USD"};
+client.Subscribe(subscriptions.Select(s => new TradeSubscription(s)));
+
+//VOLUME
+
+client.Subscribe(new VolumeSubscription("BTC"));
+//or multiple volume currencies
+client.Subscribe(new[] {"BTC", "ETC"}.Select(c => new VolumeSubscription(c)));
+
+//CURRENT
+
+client.Subscribe(new CurrentSubscription("Bitfinex", "BTC", "USD"));
+//or multiple exchange currency pairs at once
+var subscriptions = new[] { "0~Bitfinex~BTC~USD", "0~Bittrex~BTC~USD", "0~Bitstamp~BTC~USD" };
+client.Subscribe(subscriptions.Select(s => new CurrentSubscription(s)));
 ```
 
 ### Unsubscription
@@ -44,7 +63,8 @@ client.SubscribeToTrades("0~BitexBook~BTC~USD", "0~Bitfinex~BTC~USD", "0~Bitlish
 var client = new CryptoCompareSocketClient();
 var subscription = client.OnTrade.Subscribe(trade => Console.WriteLine(trade));
 await client.StartAsync();
-client.SubscribeToTrades("0~Bitfinex~BTC~USD");
+var subscription = new TradeSubscription("0~Bitfinex~BTC~USD")
+client.Subscribe(subscription);
 
 //collect for 5 seconds
 await Task.Delay(5000);
@@ -54,7 +74,7 @@ subscription.Dispose();
 
 //socket actually stops receiving trades once message is processed
 //if you need to stop receiving immediatelly, remove the handler as shown above
-client.UnsubscribeFromTrades("0~Bitfinex~BTC~USD");
+client.Unsubscribe(subscription);
 ```
 
 ### Stream processing
@@ -92,7 +112,7 @@ var subscription = client.OnTrade
 
 ## To-do
 
-- Current stream (current prices)
+- CCCAGG stream (could use some help in parsing this one)
 - Socket state monitoring
 - Auto-reconnection
 - Code documentation
