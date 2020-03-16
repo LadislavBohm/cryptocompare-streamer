@@ -120,7 +120,8 @@ namespace CryptoCompare.Streamer
                     }
                     else if (prefix == ICryptoCompareSubscription.VolumePrefix)
                     {
-                        _volumeSubject.OnNext(CCC.Volume.Unpack(data));
+                        if (CCC.Volume.TryUnpack(data, out var volume))
+                            _volumeSubject.OnNext(volume);
                     }
                     else
                     {
