@@ -12,6 +12,10 @@
         <RepositoryUrl>https://github.com/LadislavBohm/cryptocompare-streamer</RepositoryUrl>
         <PackageTags>cryptocompare crypto websocket streamer cryptocompare.client cryptocurrency</PackageTags>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <Version>1.1.0</Version>
+        <PackageReleaseNotes>added Volume and Current streams
+fixed some parsing issues
+change public API</PackageReleaseNotes>
     </PropertyGroup>
 
 	<ItemGroup>
