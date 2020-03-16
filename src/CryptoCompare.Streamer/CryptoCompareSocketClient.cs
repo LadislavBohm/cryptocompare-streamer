@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reactive;
@@ -6,6 +6,7 @@ using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Threading.Tasks;
 using CryptoCompare.Streamer.Model;
+using CryptoCompare.Streamer.Model.Exceptions;
 using CryptoCompare.Streamer.Model.Messages;
 using CryptoCompare.Streamer.Model.Subscriptions;
 using Microsoft.Extensions.Logging;
@@ -28,7 +29,7 @@ namespace CryptoCompare.Streamer
         private readonly ISubject<TradeEvent> _tradeSubject = new Subject<TradeEvent>();
         private readonly ISubject<VolumeEvent> _volumeSubject = new Subject<VolumeEvent>();
         private readonly ISubject<CurrentEvent> _currentSubject = new Subject<CurrentEvent>();
-
+        
         public CryptoCompareSocketClient(string url = "https://streamer.cryptocompare.com", ILogger<CryptoCompareSocketClient> logger = null)
         {
             _logger = logger ?? NullLogger<CryptoCompareSocketClient>.Instance;
@@ -107,13 +108,29 @@ namespace CryptoCompare.Streamer
                     var prefix = ParsePrefix(data);
                     if (prefix == ICryptoCompareSubscription.CurrentPrefix)
                     {
-                        if (CCC.Current.TryUnpack(data, out var current))
-                            _currentSubject.OnNext(current);
+                        try
+                        {
+                            if (CCC.Current.TryUnpack(data, out var current))
+                                _currentSubject.OnNext(current);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Error while parsing data from CryptoCompare.");
+                            _currentSubject.OnError(new CryptoCompareParseException(data, ex));
+                        }
                     }
                     else if (prefix == ICryptoCompareSubscription.TradePrefix)
                     {
-                        if (CCC.Trade.TryUnpack(data, out var trade))
-                            _tradeSubject.OnNext(trade);
+                        try
+                        {
+                            if (CCC.Trade.TryUnpack(data, out var trade))
+                                _tradeSubject.OnNext(trade);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Error while parsing data from CryptoCompare.");
+                            _tradeSubject.OnError(new CryptoCompareParseException(data, ex));
+                        }
                     }
                     else if (prefix == ICryptoCompareSubscription.CCCAGGPrefix)
                     {
@@ -121,8 +138,16 @@ namespace CryptoCompare.Streamer
                     }
                     else if (prefix == ICryptoCompareSubscription.VolumePrefix)
                     {
-                        if (CCC.Volume.TryUnpack(data, out var volume))
-                            _volumeSubject.OnNext(volume);
+                        try
+                        {
+                            if (CCC.Volume.TryUnpack(data, out var volume))
+                                _volumeSubject.OnNext(volume);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Error while parsing dat from CryptoCompare.");
+                            _volumeSubject.OnError(new CryptoCompareParseException(data, ex));
+                        }
                     }
                     else
                     {
