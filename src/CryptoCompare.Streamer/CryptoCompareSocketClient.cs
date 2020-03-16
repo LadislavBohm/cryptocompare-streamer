@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reactive;
@@ -151,8 +151,10 @@ namespace CryptoCompare.Streamer
 
         public void Dispose()
         {
-            _client?.Dispose();
             _tradeSubject.OnCompleted();
+            _currentSubject.OnCompleted();
+            _volumeSubject.OnCompleted();
+            _client?.Dispose();
         }
     }
 }
