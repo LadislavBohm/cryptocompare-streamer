@@ -35,10 +35,10 @@ namespace CryptoCompare.Streamer.CryptoCompare
                 { nameof(CurrentEvent.LastMarket), 0x40000 }
             };
             
-            internal static CurrentEvent Unpack(string data)
+            internal static bool TryUnpack(string data, out CurrentEvent current)
             {
-                if (string.IsNullOrEmpty(data))
-                    throw new ArgumentException("Value cannot be null or empty.", nameof(data));
+                current = null;
+                if (string.IsNullOrEmpty(data)) return false;
 
                 var values = data.Split("~");
                 var mask = Convert.ToInt32(values[^1], 16);
@@ -64,53 +64,63 @@ namespace CryptoCompare.Streamer.CryptoCompare
                 var exchange = GetFieldValue(Fields[nameof(CurrentEvent.Exchange)]);
                 var fromCurrency = GetFieldValue(Fields[nameof(CurrentEvent.FromCurrency)]);
                 var toCurrency = GetFieldValue(Fields[nameof(CurrentEvent.ToCurrency)]);
-                var flags = GetFieldValue(Fields[nameof(CurrentEvent.Flags)]);
-                var price = GetFieldValue(Fields[nameof(CurrentEvent.Price)]);
-                var bid = GetFieldValue(Fields[nameof(CurrentEvent.Bid)]);
-                var offer = GetFieldValue(Fields[nameof(CurrentEvent.Offer)]);
-                var lastUpdate = GetFieldValue(Fields[nameof(CurrentEvent.LastUpdate)]);
-                var average = GetFieldValue(Fields[nameof(CurrentEvent.Average)]);
-                var lastVolume = GetFieldValue(Fields[nameof(CurrentEvent.LastVolume)]);
-                var lastVolumeTo = GetFieldValue(Fields[nameof(CurrentEvent.LastVolumeTo)]);
+                if (!TryParseFlags(GetFieldValue(Fields[nameof(CurrentEvent.Flags)]), out var flags))
+                    return false;
+                Utils.TryParseDecimalOrNull(GetFieldValue(Fields[nameof(CurrentEvent.Price)]), out var price);
+                Utils.TryParseDecimalOrNull(GetFieldValue(Fields[nameof(CurrentEvent.Bid)]), out var bid);
+                Utils.TryParseDecimalOrNull(GetFieldValue(Fields[nameof(CurrentEvent.Offer)]), out var offer);
+                Utils.TryConvertToDateTime(GetFieldValue(Fields[nameof(CurrentEvent.LastUpdate)]), out var lastUpdate);
+                Utils.TryParseDecimalOrNull(GetFieldValue(Fields[nameof(CurrentEvent.Average)]), out var average);
+                Utils.TryParseDecimalOrNull(GetFieldValue(Fields[nameof(CurrentEvent.LastVolume)]), out var lastVolume);
+                Utils.TryParseDecimalOrNull(GetFieldValue(Fields[nameof(CurrentEvent.LastVolumeTo)]), out var lastVolumeTo);
                 var lastTradeId = GetFieldValue(Fields[nameof(CurrentEvent.LastTradeId)]);
-                var volumeHour = GetFieldValue(Fields[nameof(CurrentEvent.VolumeHour)]);
-                var volumeHourTo = GetFieldValue(Fields[nameof(CurrentEvent.VolumeHourTo)]);
-                var volume24Hour = GetFieldValue(Fields[nameof(CurrentEvent.Volume24Hour)]);
-                var volume24HourTo = GetFieldValue(Fields[nameof(CurrentEvent.Volume24HourTo)]);
-                var openHour = GetFieldValue(Fields[nameof(CurrentEvent.OpenHour)]);
-                var highHour = GetFieldValue(Fields[nameof(CurrentEvent.HighHour)]);
-                var lowHour = GetFieldValue(Fields[nameof(CurrentEvent.LowHour)]);
-                var open24Hour = GetFieldValue(Fields[nameof(CurrentEvent.Open24Hour)]);
-                var high24Hour = GetFieldValue(Fields[nameof(CurrentEvent.High24Hour)]);
-                var low24Hour = GetFieldValue(Fields[nameof(CurrentEvent.Low24Hour)]);
+                Utils.TryParseDecimalOrNull(GetFieldValue(Fields[nameof(CurrentEvent.VolumeHour)]), out var volumeHour);
+                Utils.TryParseDecimalOrNull(GetFieldValue(Fields[nameof(CurrentEvent.VolumeHourTo)]), out var volumeHourTo);
+                Utils.TryParseDecimalOrNull(GetFieldValue(Fields[nameof(CurrentEvent.Volume24Hour)]), out var volume24Hour);
+                Utils.TryParseDecimalOrNull(GetFieldValue(Fields[nameof(CurrentEvent.Volume24HourTo)]), out var volume24HourTo);
+                Utils.TryParseDecimalOrNull(GetFieldValue(Fields[nameof(CurrentEvent.OpenHour)]), out var openHour);
+                Utils.TryParseDecimalOrNull(GetFieldValue(Fields[nameof(CurrentEvent.HighHour)]), out var highHour);
+                Utils.TryParseDecimalOrNull(GetFieldValue(Fields[nameof(CurrentEvent.LowHour)]), out var lowHour);
+                Utils.TryParseDecimalOrNull(GetFieldValue(Fields[nameof(CurrentEvent.Open24Hour)]), out var open24Hour);
+                Utils.TryParseDecimalOrNull(GetFieldValue(Fields[nameof(CurrentEvent.High24Hour)]), out var high24Hour);
+                Utils.TryParseDecimalOrNull(GetFieldValue(Fields[nameof(CurrentEvent.Low24Hour)]), out var low24Hour);
                 var lastMarket = GetFieldValue(Fields[nameof(CurrentEvent.LastMarket)]);
 
-                var current = new CurrentEvent(
+                current = new CurrentEvent(
                     exchange, 
                     fromCurrency, 
                     toCurrency, 
-                    (CurrentFlags) int.Parse(flags),
-                    Utils.ParseDecimalOrNull(price),
-                    Utils.ParseDecimalOrNull(bid),
-                    Utils.ParseDecimalOrNull(offer),
-                    lastUpdate == null ? null : (DateTime?)Utils.ConvertToDateTime(long.Parse(lastUpdate)),
-                    Utils.ParseDecimalOrNull(average),
-                    Utils.ParseDecimalOrNull(lastVolume),
-                    Utils.ParseDecimalOrNull(lastVolumeTo),
+                    flags,
+                    price,
+                    bid,
+                    offer,
+                    lastUpdate,
+                    average,
+                    lastVolume,
+                    lastVolumeTo,
                     lastTradeId,
-                    Utils.ParseDecimalOrNull(volumeHour),
-                    Utils.ParseDecimalOrNull(volumeHourTo),
-                    Utils.ParseDecimalOrNull(volume24Hour),
-                    Utils.ParseDecimalOrNull(volume24HourTo),
-                    Utils.ParseDecimalOrNull(openHour),
-                    Utils.ParseDecimalOrNull(highHour),
-                    Utils.ParseDecimalOrNull(lowHour),
-                    Utils.ParseDecimalOrNull(open24Hour),
-                    Utils.ParseDecimalOrNull(high24Hour),
-                    Utils.ParseDecimalOrNull(low24Hour),
+                    volumeHour,
+                    volumeHourTo,
+                    volume24Hour,
+                    volume24HourTo,
+                    openHour,
+                    highHour,
+                    lowHour,
+                    open24Hour,
+                    high24Hour,
+                    low24Hour,
                     lastMarket);
 
-                return current;
+                return true;
+            }
+
+            private static bool TryParseFlags(string value, out CurrentFlags flags)
+            {
+                flags = default;
+                if (string.IsNullOrEmpty(value)) return false;
+                if (!int.TryParse(value, out var intFlags)) return false;
+                flags = (CurrentFlags) intFlags;
+                return true;
             }
         }
     }

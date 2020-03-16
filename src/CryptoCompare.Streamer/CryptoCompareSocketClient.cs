@@ -107,7 +107,8 @@ namespace CryptoCompare.Streamer
                     var prefix = ParsePrefix(data);
                     if (prefix == ICryptoCompareSubscription.CurrentPrefix)
                     {
-                        _currentSubject.OnNext(CCC.Current.Unpack(data));
+                        if (CCC.Current.TryUnpack(data, out var current))
+                            _currentSubject.OnNext(current);
                     }
                     else if (prefix == ICryptoCompareSubscription.TradePrefix)
                     {
